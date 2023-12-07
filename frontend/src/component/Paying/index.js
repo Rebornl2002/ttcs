@@ -8,6 +8,7 @@ import Header from '../DefaultPage/Header';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHouse, faMoneyBill } from '@fortawesome/free-solid-svg-icons';
 import axios from 'axios';
+import { fakeApi } from './fakeApi';
 
 const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const numbers = '0123456789';
@@ -46,7 +47,6 @@ function Paying() {
     const [expirationDate, setExpirationDate] = useState('');
     const [name, setName] = useState('');
     const [isNumberCard, setIsNumberCard] = useState(false);
-    const [isDate, setIsDate] = useState(false);
 
     let storedInforFlightReturn, storedInforSeatReturn;
 
@@ -237,7 +237,7 @@ function Paying() {
 
     const handlePay = (e) => {
         if (numberCard !== '' && expirationDate !== '' && name !== '') {
-            if (isNumberCard && isDate) {
+            if (isNumberCard) {
                 setShow(true);
                 console.log('success');
 
@@ -259,8 +259,6 @@ function Paying() {
             }
         } else {
             handleInputNumberCard(e);
-            handleInputName(e);
-            handleInputDate(e);
         }
     };
 
@@ -293,75 +291,39 @@ function Paying() {
         }
     }, [planeCode]);
 
+    function is_creditCard(str) {
+        const regexp =
+            /^(?:(4[0-9]{12}(?:[0-9]{3})?)|(5[1-5][0-9]{14})|(6(?:011|5[0-9]{2})[0-9]{12})|(3[47][0-9]{13})|(3(?:0[0-5]|[68][0-9])[0-9]{11})|((?:2131|1800|35[0-9]{3})[0-9]{11}))$/;
+
+        if (regexp.test(str)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     const handleInputNumberCard = (e) => {
         setNumberCard(e.target.value);
 
         const cardNumber = document.querySelector('#card-number');
         const error = document.querySelector('#ip-1');
-        if (e.target.value.length !== 16 && e.target.value.length !== 19) {
+
+        if (!is_creditCard(e.target.value)) {
             cardNumber.style.outlineColor = 'red';
+            error.innerText = 'Số thẻ không hợp lệ';
             error.style.color = 'red';
             setIsNumberCard(false);
         } else {
             cardNumber.style.outlineColor = '#4469b0';
+            error.innerText = 'Vui lòng nhập số thẻ';
             error.style.color = 'transparent';
+            fakeApi.forEach((value) => {
+                if (value.cardNumber === e.target.value) {
+                    setName(value.name);
+                    setExpirationDate(value.exp);
+                }
+            });
             setIsNumberCard(true);
-        }
-    };
-
-    const handleInputDate = (e) => {
-        setExpirationDate(e.target.value);
-        const date = document.querySelector('#date');
-        const error = document.querySelector('#ip-2');
-        const dateSplit = expirationDate.slice(2, 3);
-        const dateCard = Number(expirationDate.slice(0, 2));
-        const monthCard = Number(e.target.value.slice(3, 5));
-
-        if (e.target.value.length === 5 && dateSplit === '/') {
-            if ((monthCard === 4 || monthCard === 6 || monthCard === 9 || monthCard === 11) && dateCard > 30) {
-                error.innerText = 'Ngày tháng không hợp lệ';
-                error.style.color = 'red';
-                setIsDate(false);
-            } else if (
-                (monthCard === 3 ||
-                    monthCard === 5 ||
-                    monthCard === 7 ||
-                    monthCard === 8 ||
-                    monthCard === 10 ||
-                    monthCard === 12) &&
-                dateCard > 31
-            ) {
-                error.innerText = 'Ngày tháng không hợp lệ';
-                error.style.color = 'red';
-                setIsDate(false);
-            } else if (monthCard === 2 && dateCard > 29) {
-                error.innerText = 'Ngày tháng không hợp lệ';
-                error.style.color = 'red';
-                setIsDate(false);
-            } else {
-                date.style.outlineColor = '#4469b0';
-                error.innerText = 'Phải nhập ngày tháng (VD: 01/01)';
-                error.style.color = 'transparent';
-                setIsDate(true);
-            }
-        } else {
-            date.style.outlineColor = 'red';
-            error.style.color = 'red';
-            setIsDate(false);
-        }
-    };
-
-    const handleInputName = (e) => {
-        setName(e.target.value);
-        const error = document.querySelector('#ip-3');
-        const name = document.querySelector('#name');
-
-        if (e.target.value.trim() === '') {
-            error.style.color = 'red';
-            name.style.outlineColor = 'red';
-        } else {
-            error.style.color = 'transparent';
-            name.style.outlineColor = '#4469b0';
         }
     };
 
@@ -409,31 +371,29 @@ function Paying() {
                                     onChange={handleInputNumberCard}
                                 />
                                 <span id="ip-1" className={cx('title-input')}>
-                                    Số thẻ phải có 16 hoặc 19 chữ số
+                                    Không được bỏ trống trường này
                                 </span>
                                 <input
                                     id="date"
                                     className={cx('input-text')}
                                     autoComplete="off"
-                                    maxLength="5"
+                                    maxLength="7"
                                     value={expirationDate}
                                     inputMode="numeric"
                                     type="tel"
                                     placeholder="Ngày hết hạn"
-                                    onChange={handleInputDate}
                                 />
                                 <span id="ip-2" className={cx('title-input')}>
-                                    Phải nhập ngày tháng (VD: 01/01)
+                                    Không được bỏ trống trường này
                                 </span>
                                 <input
                                     id="name"
                                     className={cx('input-text')}
                                     value={name}
-                                    onChange={handleInputName}
                                     placeholder="Họ tên chủ thẻ"
                                 />
                                 <span id="ip-3" className={cx('title-input')}>
-                                    Không được bỏ trống
+                                    Không được bỏ trống trường này
                                 </span>
                                 <div className={cx('submit-btn')}>
                                     <Link to="/seatBook" className={cx('btn', 'return-btn')}>

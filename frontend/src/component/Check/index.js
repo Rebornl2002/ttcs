@@ -20,6 +20,13 @@ function Check() {
         Phone: '',
     });
 
+    let isName = false;
+    let isPhone = false;
+    let isEmail = false;
+    let isAddress = false;
+    let isCCCD = false;
+    let isDate = false;
+
     const handleChange = (e) => {
         const value = e.target.value;
         const id = e.target.id;
@@ -30,39 +37,145 @@ function Check() {
     const [showModal, setShowModal] = useState(false);
 
     const handleSubmit = () => {
-        axios
-            .post('http://localhost:4000/auth/enterInfo', {
-                Username: data.Username,
-                DayOfBirth: data.DayOfBirth,
-                Email: data.Email,
-                Address: data.Address,
-                ID_Card: data.ID_Card,
-                Phone: data.Phone,
-            })
-            .then((res) => {
-                console.log(res);
-                toast.success('Nhập thông tin thành công');
-                setData({
-                    Username: '',
-                    DayOfBirth: '',
-                    Email: '',
-                    Address: '',
-                    ID_Card: '',
-                    Phone: '',
+        handleCheckForm();
+
+        if (isAddress && isDate && isEmail && isCCCD && isName && isPhone) {
+            axios
+                .post('http://localhost:4000/auth/enterInfo', {
+                    Username: data.Username,
+                    DayOfBirth: data.DayOfBirth,
+                    Email: data.Email,
+                    Address: data.Address,
+                    ID_Card: data.ID_Card,
+                    Phone: data.Phone,
+                })
+                .then((res) => {
+                    console.log(res);
+                    toast.success('Nhập thông tin thành công');
+                    setData({
+                        Username: '',
+                        DayOfBirth: '',
+                        Email: '',
+                        Address: '',
+                        ID_Card: '',
+                        Phone: '',
+                    });
+
+                    setTimeout(() => {
+                        setShowModal(true);
+                    }, 4000);
+
+                    // Store bookedButton in localStorage
+                    localStorage.setItem('inforPerson', JSON.stringify(data));
+                })
+                .catch((err) => {
+                    console.log(err);
+                    toast.error('Vui lòng nhập lại thông tin');
                 });
-
-                setTimeout(() => {
-                    setShowModal(true);
-                }, 4000);
-
-                // Store bookedButton in localStorage
-                localStorage.setItem('inforPerson', JSON.stringify(data));
-            })
-            .catch((err) => {
-                console.log(err);
-                toast.error('Vui lòng nhập lại thông tin');
-            });
+        } else {
+            toast.error('Vui lòng nhập lại thông tin');
+        }
     };
+
+    const handleCheckForm = () => {
+        handleCheckName();
+        handleCheckDate();
+        handleCheckEmail();
+        handleCheckAdress();
+        handleCheckCCCD();
+        handleCheckPhone();
+    };
+
+    const handleCheckName = () => {
+        const errorUsename = document.querySelector('#check-1');
+
+        if (data.Username.trim() === '') {
+            errorUsename.style.color = 'red';
+            isName = false;
+        } else {
+            errorUsename.style.color = 'transparent';
+            isName = true;
+        }
+
+        return isName;
+    };
+
+    const handleCheckDate = () => {
+        const errorDay = document.querySelector('#check-2');
+        const day = data.DayOfBirth.split('/');
+        const validteDay = day[1] + '/' + day[0] + '/' + day[2];
+
+        if (!isDateValid(validteDay)) {
+            errorDay.style.color = 'red';
+            isDate = false;
+        } else {
+            errorDay.style.color = 'transparent';
+            isDate = true;
+        }
+
+        return isDate;
+    };
+
+    const handleCheckEmail = () => {
+        const errorEmail = document.querySelector('#check-3');
+        const redex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+
+        if (!redex.test(data.Email)) {
+            errorEmail.style.color = 'red';
+            isEmail = false;
+        } else {
+            errorEmail.style.color = 'transparent';
+            isEmail = true;
+        }
+    };
+
+    const handleCheckAdress = () => {
+        const errorAdress = document.querySelector('#check-4');
+        if (data.Address.trim() === '') {
+            errorAdress.style.color = 'red';
+            isAddress = false;
+        } else {
+            errorAdress.style.color = 'transparent';
+            isAddress = true;
+        }
+    };
+
+    const handleCheckCCCD = () => {
+        const errorCMND = document.querySelector('#check-5');
+        const isNumberCCCD = isNaN(data.ID_Card.trim());
+
+        if (data.ID_Card.trim() === '') {
+            errorCMND.innerText = 'Trường này không được bỏ trống';
+            errorCMND.style.color = 'red';
+            isCCCD = false;
+        } else if (data.ID_Card.trim().length === 12 && !isNumberCCCD) {
+            errorCMND.style.color = 'transparent';
+            isCCCD = true;
+        } else {
+            errorCMND.innerText = 'Số CCCD không hơp lệ';
+            errorCMND.style.color = 'red';
+            isCCCD = false;
+        }
+
+        return isCCCD;
+    };
+
+    const handleCheckPhone = () => {
+        const errorPhone = document.querySelector('#check-6');
+        const phoneRegex = /((09|03|07|08|05)+([0-9]{8})\b)/g;
+
+        if (!phoneRegex.test(data.Phone)) {
+            errorPhone.style.color = 'red';
+            isPhone = false;
+        } else {
+            errorPhone.style.color = 'transparent';
+            isPhone = true;
+        }
+    };
+
+    function isDateValid(dateStr) {
+        return !isNaN(new Date(dateStr));
+    }
 
     return (
         <div className={cx('wrapper')}>
@@ -70,7 +183,7 @@ function Check() {
                 <h2 className={cx('title_1', 'pb-2')}>Nhập thông tin</h2>
 
                 <form className={cx('form_1', 'mt-2')}>
-                    <div className={cx('content', ' mb-2')}>
+                    <div className={cx('content')}>
                         <div className={cx('col_6')}>
                             <label className={cx('title_2', 'mb-1')} htmlFor="Username">
                                 Họ tên
@@ -84,6 +197,9 @@ function Check() {
                                 onChange={handleChange}
                                 className={cx('input')}
                             />
+                            <span id="check-1" className={cx('error-message')}>
+                                Trường này không được bỏ trống
+                            </span>
                         </div>
 
                         <div className={cx('col_6')}>
@@ -99,10 +215,13 @@ function Check() {
                                 onChange={handleChange}
                                 className={cx('input')}
                             />
+                            <span id="check-2" className={cx('error-message')}>
+                                Vui lòng nhập ngày sinh
+                            </span>
                         </div>
                     </div>
 
-                    <div className={cx('content', 'mb-2')}>
+                    <div className={cx('content')}>
                         <div className={cx('col_6')}>
                             <label className={cx('title_2', 'mb-1')} htmlFor="Email">
                                 Email
@@ -116,6 +235,9 @@ function Check() {
                                 onChange={handleChange}
                                 className={cx('input')}
                             />
+                            <span id="check-3" className={cx('error-message')}>
+                                Trường này phải là email
+                            </span>
                         </div>
 
                         <div className={cx('col_6')}>
@@ -131,23 +253,29 @@ function Check() {
                                 onChange={handleChange}
                                 className={cx('input')}
                             />
+                            <span id="check-4" className={cx('error-message')}>
+                                Trường này không được bỏ trống
+                            </span>
                         </div>
                     </div>
 
                     <div className={cx('content')}>
                         <div className={cx('col_6')}>
                             <label className={cx('title_2', 'mb-1')} htmlFor="ID_Card">
-                                Số CMND
+                                Số CCCD
                             </label>
 
                             <input
                                 type="text"
                                 value={data.ID_Card}
                                 id="ID_Card"
-                                placeholder="Số CMND"
+                                placeholder="Số CCCD"
                                 onChange={handleChange}
                                 className={cx('input')}
                             />
+                            <span id="check-5" className={cx('error-message')}>
+                                Trường này không được bỏ trống
+                            </span>
                         </div>
 
                         <div className={cx('col_6')}>
@@ -163,6 +291,9 @@ function Check() {
                                 onChange={handleChange}
                                 className={cx('input')}
                             />
+                            <span id="check-6" className={cx('error-message')}>
+                                Trường này phải nhập số điện thoại
+                            </span>
                         </div>
                     </div>
 
